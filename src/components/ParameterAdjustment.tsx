@@ -6,16 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Droplets, ThermometerSun, Leaf, TrendingUp, Calendar, DollarSign, AlertCircle } from "lucide-react";
+import { Droplets, ThermometerSun, Leaf, TrendingUp, Calendar, DollarSign, AlertCircle, ChevronLeft } from "lucide-react";
 import { CropRecommendation } from "@/types/crop";
 
 interface ParameterAdjustmentProps {
   crop: CropRecommendation;
   onBack: () => void;
-  onCompare: () => void;
 }
 
-export function ParameterAdjustment({ crop, onBack, onCompare }: ParameterAdjustmentProps) {
+export function ParameterAdjustment({ crop, onBack }: ParameterAdjustmentProps) {
   const [rainfall, setRainfall] = useState([700]);
   const [temperature, setTemperature] = useState([25]);
   const [soilType, setSoilType] = useState("loamy");
@@ -65,18 +64,14 @@ export function ParameterAdjustment({ crop, onBack, onCompare }: ParameterAdjust
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">{crop.name} - Detailed Analysis</h2>
+          <Button variant="ghost" onClick={onBack} className="mb-2">
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Back to Crop Selection
+          </Button>
+          <h2 className="text-2xl font-bold">Step 3: {crop.name} - Detailed Prediction</h2>
           <p className="text-muted-foreground">
-            Adjust environmental parameters to see yield predictions
+            Adjust environmental parameters to see how they affect yield predictions
           </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onBack}>
-            Back to Selection
-          </Button>
-          <Button onClick={onCompare}>
-            Compare Crops
-          </Button>
         </div>
       </div>
 

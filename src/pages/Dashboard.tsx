@@ -8,18 +8,16 @@ import { toast } from "sonner";
 import { CropRecommendation } from "@/types/crop";
 import { CropSelector } from "@/components/CropSelector";
 import { ParameterAdjustment } from "@/components/ParameterAdjustment";
-import { CropComparison } from "@/components/CropComparison";
 
-type ViewMode = "district" | "selection" | "detail" | "comparison";
+type ViewMode = "district" | "crops" | "detail";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [recommendations, setRecommendations] = useState<CropRecommendation[]>([]);
-  const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("district");
-  const [detailCrop, setDetailCrop] = useState<CropRecommendation | null>(null);
+  const [selectedCrop, setSelectedCrop] = useState<CropRecommendation | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -341,47 +339,33 @@ export default function Dashboard() {
   const handleDistrictChange = (value: string) => {
     setSelectedDistrict(value);
     setRecommendations(mockRecommendations);
-    setViewMode("selection");
-    setSelectedCrops([]);
-    toast.success(`Analyzing data for ${value} district...`);
+    setViewMode("crops");
+    setSelectedCrop(null);
+    toast.success(`Loading crops for ${value} district...`);
   };
 
-  const handleToggleCrop = (cropName: string) => {
-    setSelectedCrops(prev => {
-      if (prev.includes(cropName)) {
-        return prev.filter(name => name !== cropName);
-      } else if (prev.length < 5) {
-        return [...prev, cropName];
-      } else {
-        toast.error("Maximum 5 crops can be selected for comparison");
-        return prev;
-      }
-    });
+  const handleSelectCrop = (crop: CropRecommendation) => {
+    setSelectedCrop(crop);
+    setViewMode("detail");
+    toast.success(`Analyzing ${crop.name}...`);
   };
 
-  const handleContinueToAnalysis = () => {
-    if (selectedCrops.length === 1) {
-      const crop = recommendations.find(c => c.name === selectedCrops[0]);
-      if (crop) {
-        setDetailCrop(crop);
-        setViewMode("detail");
-      }
-    } else {
-      setViewMode("comparison");
-    }
+  const handleBackToCrops = () => {
+    setViewMode("crops");
+    setSelectedCrop(null);
   };
 
-  const handleBackToSelection = () => {
-    setViewMode("selection");
-    setDetailCrop(null);
+  const handleBackToDistrict = () => {
+    setViewMode("district");
+    setSelectedDistrict("");
+    setRecommendations([]);
+    setSelectedCrop(null);
   };
 
-  const handleCompare = () => {
-    setViewMode("comparison");
-  };
-
-  const getSelectedCropObjects = () => {
-    return recommendations.filter(crop => selectedCrops.includes(crop.name));
+  const getSuitabilityColor = (score: number) => {
+    if (score >= 90) return "bg-primary text-primary-foreground";
+    if (score >= 80) return "bg-accent text-accent-foreground";
+    return "bg-secondary text-secondary-foreground";
   };
 
   if (loading) {
@@ -410,36 +394,47 @@ export default function Dashboard() {
           </div>
 
           {/* District Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Your District</CardTitle>
-              <CardDescription>
-                Choose your district to get personalized crop recommendations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedDistrict} onValueChange={handleDistrictChange}>
-                <SelectTrigger className="w-full md:w-96">
-                  <SelectValue placeholder="Select a district" />
-                </SelectTrigger>
-                <SelectContent>
-                  {districts.map((district) => (
-                    <SelectItem key={district} value={district}>
-                      {district}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-
-
-          {selectedDistrict && recommendations.length === 0 && (
+          {viewMode === "district" && (
             <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">Analyzing data for your district...</p>
+              <CardHeader>
+                <CardTitle>Step 1: Select Your District</CardTitle>
+                <CardDescription>
+                  Choose your district to get personalized crop recommendations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Select value={selectedDistrict} onValueChange={handleDistrictChange}>
+                  <SelectTrigger className="w-full md:w-96">
+                    <SelectValue placeholder="Select a district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {districts.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </CardContent>
             </Card>
+          )}
+
+          {/* Crop List */}
+          {viewMode === "crops" && (
+            <CropSelector
+              recommendations={recommendations}
+              selectedDistrict={selectedDistrict}
+              onSelectCrop={handleSelectCrop}
+              onBack={handleBackToDistrict}
+            />
+          )}
+
+          {/* Detail View with Parameters */}
+          {viewMode === "detail" && selectedCrop && (
+            <ParameterAdjustment
+              crop={selectedCrop}
+              onBack={handleBackToCrops}
+            />
           )}
         </div>
       </div>
