@@ -2,31 +2,24 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { TrendingUp, Calendar, DollarSign, Droplets, ThermometerSun, Leaf } from "lucide-react";
 import { toast } from "sonner";
+import { CropRecommendation } from "@/types/crop";
+import { CropSelector } from "@/components/CropSelector";
+import { ParameterAdjustment } from "@/components/ParameterAdjustment";
+import { CropComparison } from "@/components/CropComparison";
 
-interface CropRecommendation {
-  name: string;
-  suitability: number;
-  estimatedYield: string;
-  harvestDate: string;
-  marketPrice: string;
-  expectedRevenue: string;
-  soilRequirements: string;
-  waterNeeds: string;
-  temperature: string;
-}
+type ViewMode = "district" | "selection" | "detail" | "comparison";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [recommendations, setRecommendations] = useState<CropRecommendation[]>([]);
+  const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>("district");
+  const [detailCrop, setDetailCrop] = useState<CropRecommendation | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -348,13 +341,47 @@ export default function Dashboard() {
   const handleDistrictChange = (value: string) => {
     setSelectedDistrict(value);
     setRecommendations(mockRecommendations);
+    setViewMode("selection");
+    setSelectedCrops([]);
     toast.success(`Analyzing data for ${value} district...`);
   };
 
-  const getSuitabilityColor = (score: number) => {
-    if (score >= 90) return "bg-primary text-primary-foreground";
-    if (score >= 80) return "bg-accent text-accent-foreground";
-    return "bg-secondary text-secondary-foreground";
+  const handleToggleCrop = (cropName: string) => {
+    setSelectedCrops(prev => {
+      if (prev.includes(cropName)) {
+        return prev.filter(name => name !== cropName);
+      } else if (prev.length < 5) {
+        return [...prev, cropName];
+      } else {
+        toast.error("Maximum 5 crops can be selected for comparison");
+        return prev;
+      }
+    });
+  };
+
+  const handleContinueToAnalysis = () => {
+    if (selectedCrops.length === 1) {
+      const crop = recommendations.find(c => c.name === selectedCrops[0]);
+      if (crop) {
+        setDetailCrop(crop);
+        setViewMode("detail");
+      }
+    } else {
+      setViewMode("comparison");
+    }
+  };
+
+  const handleBackToSelection = () => {
+    setViewMode("selection");
+    setDetailCrop(null);
+  };
+
+  const handleCompare = () => {
+    setViewMode("comparison");
+  };
+
+  const getSelectedCropObjects = () => {
+    return recommendations.filter(crop => selectedCrops.includes(crop.name));
   };
 
   if (loading) {
@@ -406,108 +433,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Recommendations */}
-          {recommendations.length > 0 && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">Top Recommendations</h2>
-                  <p className="text-muted-foreground">
-                    Based on {selectedDistrict} district's soil and climate data
-                  </p>
-                </div>
-                <Button variant="outline">Download Report</Button>
-              </div>
-
-              <div className="grid gap-6">
-                {recommendations.map((crop, index) => (
-                  <Card key={index} className="border-2 hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-2xl">{crop.name}</CardTitle>
-                          <CardDescription>Rank #{index + 1}</CardDescription>
-                        </div>
-                        <Badge className={getSuitabilityColor(crop.suitability)}>
-                          {crop.suitability}% Suitable
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                            <TrendingUp className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Estimated Yield</p>
-                            <p className="text-sm text-muted-foreground">{crop.estimatedYield}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                            <Calendar className="h-5 w-5 text-accent" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Harvest Time</p>
-                            <p className="text-sm text-muted-foreground">{crop.harvestDate}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10">
-                            <DollarSign className="h-5 w-5 text-secondary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Market Price</p>
-                            <p className="text-sm text-muted-foreground">{crop.marketPrice}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                            <Leaf className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Soil Requirements</p>
-                            <p className="text-sm text-muted-foreground">{crop.soilRequirements}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                            <Droplets className="h-5 w-5 text-accent" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Water Needs</p>
-                            <p className="text-sm text-muted-foreground">{crop.waterNeeds}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10">
-                            <ThermometerSun className="h-5 w-5 text-secondary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Temperature</p>
-                            <p className="text-sm text-muted-foreground">{crop.temperature}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div className="bg-primary/5 rounded-lg p-4">
-                        <p className="font-semibold text-primary mb-1">Expected Revenue</p>
-                        <p className="text-2xl font-bold">{crop.expectedRevenue}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
 
           {selectedDistrict && recommendations.length === 0 && (
             <Card>
