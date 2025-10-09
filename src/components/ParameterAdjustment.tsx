@@ -6,8 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Droplets, ThermometerSun, Leaf, TrendingUp, Calendar, DollarSign, AlertCircle, ChevronLeft } from "lucide-react";
+import { Droplets, ThermometerSun, Leaf, TrendingUp, Calendar, DollarSign, AlertCircle, ChevronLeft, Download } from "lucide-react";
 import { CropRecommendation } from "@/types/crop";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import jsPDF from "jspdf";
 
 interface ParameterAdjustmentProps {
   crop: CropRecommendation;
@@ -60,6 +62,103 @@ export function ParameterAdjustment({ crop, onBack }: ParameterAdjustmentProps) 
 
   const yieldStatus = getYieldStatus();
 
+  // Generate chart data for rainfall impact
+  const rainfallChartData = Array.from({ length: 24 }, (_, i) => {
+    const rain = 200 + (i * 100);
+    const baseYield = parseFloat(crop.estimatedYield.split('-')[0]);
+    let adjustment = 1.0;
+    if (rain < 500) adjustment = 0.7;
+    else if (rain > 1200) adjustment = 0.85;
+    
+    // Temperature and pH impact (using current values)
+    const tempDiff = Math.abs(temperature[0] - 25);
+    if (tempDiff > 10) adjustment *= 0.7;
+    else if (tempDiff > 5) adjustment *= 0.85;
+    
+    const pHDiff = Math.abs(soilpH[0] - 6.5);
+    if (pHDiff > 1.5) adjustment *= 0.75;
+    else if (pHDiff > 1) adjustment *= 0.9;
+    
+    return {
+      rainfall: rain,
+      yield: parseFloat((baseYield * adjustment).toFixed(1))
+    };
+  });
+
+  // Generate chart data for temperature impact
+  const temperatureChartData = Array.from({ length: 36 }, (_, i) => {
+    const temp = 10 + i;
+    const baseYield = parseFloat(crop.estimatedYield.split('-')[0]);
+    let adjustment = 1.0;
+    
+    // Rainfall impact (using current value)
+    if (rainfall[0] < 500) adjustment *= 0.7;
+    else if (rainfall[0] > 1200) adjustment *= 0.85;
+    
+    // Temperature impact
+    const tempDiff = Math.abs(temp - 25);
+    if (tempDiff > 10) adjustment *= 0.7;
+    else if (tempDiff > 5) adjustment *= 0.85;
+    
+    // pH impact (using current value)
+    const pHDiff = Math.abs(soilpH[0] - 6.5);
+    if (pHDiff > 1.5) adjustment *= 0.75;
+    else if (pHDiff > 1) adjustment *= 0.9;
+    
+    return {
+      temperature: temp,
+      yield: parseFloat((baseYield * adjustment).toFixed(1))
+    };
+  });
+
+  // Generate PDF Report
+  const generatePDFReport = () => {
+    const doc = new jsPDF();
+    const adjustedYield = calculateAdjustedYield();
+    
+    // Title
+    doc.setFontSize(20);
+    doc.text("Crop Yield Prediction Report", 20, 20);
+    
+    // Crop Information
+    doc.setFontSize(16);
+    doc.text(`Crop: ${crop.name}`, 20, 35);
+    
+    doc.setFontSize(12);
+    doc.text("Environmental Parameters:", 20, 50);
+    doc.text(`Rainfall: ${rainfall[0]} mm/year`, 30, 60);
+    doc.text(`Temperature: ${temperature[0]}°C`, 30, 70);
+    doc.text(`Soil Type: ${soilType}`, 30, 80);
+    doc.text(`Soil pH: ${soilpH[0].toFixed(1)}`, 30, 90);
+    
+    // Yield Prediction
+    doc.text("Yield Prediction:", 20, 110);
+    doc.setFontSize(14);
+    doc.text(`Adjusted Yield: ${adjustedYield} tonnes/hectare`, 30, 120);
+    doc.text(`Status: ${yieldStatus.message}`, 30, 130);
+    doc.text(`Change: ${yieldStatus.difference}`, 30, 140);
+    
+    // Crop Details
+    doc.setFontSize(12);
+    doc.text("Crop Information:", 20, 160);
+    doc.text(`Standard Yield Range: ${crop.estimatedYield}`, 30, 170);
+    doc.text(`Harvest Time: ${crop.harvestDate}`, 30, 180);
+    doc.text(`Market Price: ${crop.marketPrice}`, 30, 190);
+    doc.text(`Expected Revenue: ${crop.expectedRevenue}`, 30, 200);
+    
+    doc.text("Requirements:", 20, 220);
+    doc.text(`Soil: ${crop.soilRequirements}`, 30, 230);
+    doc.text(`Water: ${crop.waterNeeds}`, 30, 240);
+    doc.text(`Temperature: ${crop.temperature}`, 30, 250);
+    
+    // Footer
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 280);
+    
+    // Save the PDF
+    doc.save(`${crop.name.replace(/\s+/g, '_')}_prediction_report.pdf`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -73,6 +172,10 @@ export function ParameterAdjustment({ crop, onBack }: ParameterAdjustmentProps) 
             Adjust environmental parameters to see how they affect yield predictions
           </p>
         </div>
+        <Button onClick={generatePDFReport} className="gap-2">
+          <Download className="h-4 w-4" />
+          Download Report
+        </Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -256,6 +359,85 @@ export function ParameterAdjustment({ crop, onBack }: ParameterAdjustmentProps) 
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Optimal Temperature</p>
                   <p className="text-sm text-muted-foreground">{crop.temperature}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Yield Visualization Graphs */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Yield Impact Visualization</CardTitle>
+              <CardDescription>See how different parameters affect crop yield</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Rainfall Impact Chart */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <Droplets className="h-4 w-4 text-primary" />
+                  Yield vs Rainfall
+                </h4>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={rainfallChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="rainfall" 
+                      label={{ value: 'Rainfall (mm)', position: 'insideBottom', offset: -5 }}
+                    />
+                    <YAxis 
+                      label={{ value: 'Yield (tonnes/ha)', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip />
+                    <Line 
+                      type="monotone" 
+                      dataKey="yield" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={2}
+                      dot={{ r: 2 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+                <div className="flex items-center justify-center mt-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-primary"></div>
+                    <span>Current: {rainfall[0]}mm → {calculateAdjustedYield()} tonnes/ha</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Temperature Impact Chart */}
+              <div>
+                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <ThermometerSun className="h-4 w-4 text-accent" />
+                  Yield vs Temperature
+                </h4>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={temperatureChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="temperature" 
+                      label={{ value: 'Temperature (°C)', position: 'insideBottom', offset: -5 }}
+                    />
+                    <YAxis 
+                      label={{ value: 'Yield (tonnes/ha)', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip />
+                    <Line 
+                      type="monotone" 
+                      dataKey="yield" 
+                      stroke="hsl(var(--accent))" 
+                      strokeWidth={2}
+                      dot={{ r: 2 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+                <div className="flex items-center justify-center mt-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="h-2 w-2 rounded-full bg-accent"></div>
+                    <span>Current: {temperature[0]}°C → {calculateAdjustedYield()} tonnes/ha</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
