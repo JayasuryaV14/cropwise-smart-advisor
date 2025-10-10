@@ -14,32 +14,469 @@ export type Database = {
   }
   public: {
     Tables: {
-      profiles: {
+      crop_cultivation_steps: {
         Row: {
           created_at: string | null
-          district: string | null
-          farm_size: number | null
-          full_name: string | null
+          crop_id: string | null
+          description: string
+          duration_days: number | null
           id: string
-          updated_at: string | null
+          image_url: string | null
+          stage_name: string
+          step_number: number
+          tips: string | null
         }
         Insert: {
           created_at?: string | null
-          district?: string | null
-          farm_size?: number | null
-          full_name?: string | null
-          id: string
-          updated_at?: string | null
+          crop_id?: string | null
+          description: string
+          duration_days?: number | null
+          id?: string
+          image_url?: string | null
+          stage_name: string
+          step_number: number
+          tips?: string | null
         }
         Update: {
           created_at?: string | null
+          crop_id?: string | null
+          description?: string
+          duration_days?: number | null
+          id?: string
+          image_url?: string | null
+          stage_name?: string
+          step_number?: number
+          tips?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crop_cultivation_steps_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crops: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          growth_duration_days: number | null
+          id: string
+          name: string
+          temperature_range: string | null
+          water_requirement: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          growth_duration_days?: number | null
+          id?: string
+          name: string
+          temperature_range?: string | null
+          water_requirement?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          growth_duration_days?: number | null
+          id?: string
+          name?: string
+          temperature_range?: string | null
+          water_requirement?: string | null
+        }
+        Relationships: []
+      }
+      district_crop_suitability: {
+        Row: {
+          created_at: string | null
+          crop_id: string | null
+          district_id: string | null
+          estimated_yield: string | null
+          expected_revenue: string | null
+          harvest_months: string | null
+          id: string
+          market_price: string | null
+          soil_requirements: string | null
+          suitability_score: number | null
+          temperature: string | null
+          water_needs: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crop_id?: string | null
+          district_id?: string | null
+          estimated_yield?: string | null
+          expected_revenue?: string | null
+          harvest_months?: string | null
+          id?: string
+          market_price?: string | null
+          soil_requirements?: string | null
+          suitability_score?: number | null
+          temperature?: string | null
+          water_needs?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crop_id?: string | null
+          district_id?: string | null
+          estimated_yield?: string | null
+          expected_revenue?: string | null
+          harvest_months?: string | null
+          id?: string
+          market_price?: string | null
+          soil_requirements?: string | null
+          suitability_score?: number | null
+          temperature?: string | null
+          water_needs?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "district_crop_suitability_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "district_crop_suitability_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      districts: {
+        Row: {
+          avg_rainfall: number | null
+          climate_zone: string | null
+          created_at: string | null
+          id: string
+          name: string
+          soil_type: string | null
+          state: string | null
+        }
+        Insert: {
+          avg_rainfall?: number | null
+          climate_zone?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          soil_type?: string | null
+          state?: string | null
+        }
+        Update: {
+          avg_rainfall?: number | null
+          climate_zone?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          soil_type?: string | null
+          state?: string | null
+        }
+        Relationships: []
+      }
+      farmer_crop_experience: {
+        Row: {
+          challenges: string | null
+          created_at: string | null
+          crop_id: string | null
+          district_id: string | null
+          farmer_id: string | null
+          id: string
+          tips: string | null
+          willing_to_help: boolean | null
+          year: number | null
+          yield_achieved: string | null
+        }
+        Insert: {
+          challenges?: string | null
+          created_at?: string | null
+          crop_id?: string | null
+          district_id?: string | null
+          farmer_id?: string | null
+          id?: string
+          tips?: string | null
+          willing_to_help?: boolean | null
+          year?: number | null
+          yield_achieved?: string | null
+        }
+        Update: {
+          challenges?: string | null
+          created_at?: string | null
+          crop_id?: string | null
+          district_id?: string | null
+          farmer_id?: string | null
+          id?: string
+          tips?: string | null
+          willing_to_help?: boolean | null
+          year?: number | null
+          yield_achieved?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_crop_experience_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_crop_experience_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_crop_experience_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      farmer_messages: {
+        Row: {
+          created_at: string | null
+          crop_id: string | null
+          id: string
+          message: string
+          read: boolean | null
+          receiver_id: string | null
+          sender_id: string | null
+          subject: string
+        }
+        Insert: {
+          created_at?: string | null
+          crop_id?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          subject: string
+        }
+        Update: {
+          created_at?: string | null
+          crop_id?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farmer_messages_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "farmer_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      help_requests: {
+        Row: {
+          created_at: string | null
+          crop_id: string | null
+          farmer_id: string | null
+          id: string
+          question: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crop_id?: string | null
+          farmer_id?: string | null
+          id?: string
+          question: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crop_id?: string | null
+          farmer_id?: string | null
+          id?: string
+          question?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_requests_crop_id_fkey"
+            columns: ["crop_id"]
+            isOneToOne: false
+            referencedRelation: "crops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "help_requests_farmer_id_fkey"
+            columns: ["farmer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      help_responses: {
+        Row: {
+          created_at: string | null
+          helpful_count: number | null
+          id: string
+          request_id: string | null
+          responder_id: string | null
+          response: string
+        }
+        Insert: {
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          request_id?: string | null
+          responder_id?: string | null
+          response: string
+        }
+        Update: {
+          created_at?: string | null
+          helpful_count?: number | null
+          id?: string
+          request_id?: string | null
+          responder_id?: string | null
+          response?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_responses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "help_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "help_responses_responder_id_fkey"
+            columns: ["responder_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          district: string | null
+          district_id: string | null
+          experience_years: number | null
+          farm_size: number | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          preferred_language: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
           district?: string | null
+          district_id?: string | null
+          experience_years?: number | null
+          farm_size?: number | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          preferred_language?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          district?: string | null
+          district_id?: string | null
+          experience_years?: number | null
           farm_size?: number | null
           full_name?: string | null
           id?: string
+          phone?: string | null
+          preferred_language?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_contacts: {
+        Row: {
+          address: string | null
+          contact_type: string
+          created_at: string | null
+          designation: string | null
+          district_id: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          specialization: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          contact_type: string
+          created_at?: string | null
+          designation?: string | null
+          district_id?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          specialization?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          contact_type?: string
+          created_at?: string | null
+          designation?: string | null
+          district_id?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          specialization?: string | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_contacts_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -48,6 +48,15 @@ export const Navbar = () => {
               <Button variant="ghost" asChild>
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/support">Support</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/community">Community</Link>
+              </Button>
+              <Button variant="ghost" asChild>
+                <Link to="/profile">Profile</Link>
+              </Button>
               <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
               </Button>

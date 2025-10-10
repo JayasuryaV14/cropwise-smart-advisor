@@ -31,15 +31,15 @@ export default function Dashboard() {
     checkAuth();
   }, [navigate]);
 
-  const districts = [
-    "Ariyalur", "Chengalpattu", "Chennai", "Coimbatore", "Cuddalore", "Dharmapuri",
-    "Dindigul", "Erode", "Kallakurichi", "Kanchipuram", "Kanyakumari", "Karur",
-    "Krishnagiri", "Madurai", "Mayiladuthurai", "Nagapattinam", "Namakkal",
-    "Nilgiris", "Perambalur", "Pudukkottai", "Ramanathapuram", "Ranipet",
-    "Salem", "Sivaganga", "Tenkasi", "Thanjavur", "Theni", "Thoothukudi",
-    "Tiruchirappalli", "Tirunelveli", "Tirupathur", "Tiruppur", "Tiruvallur",
-    "Tiruvannamalai", "Tiruvarur", "Vellore", "Viluppuram", "Virudhunagar"
-  ];
+  const [districts, setDistricts] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      const { data } = await supabase.from("districts").select("id, name").order("name");
+      if (data) setDistricts(data);
+    };
+    fetchDistricts();
+  }, []);
 
   const mockRecommendations: CropRecommendation[] = [
     // Vegetables
@@ -408,11 +408,11 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select a district" />
                   </SelectTrigger>
                   <SelectContent>
-                    {districts.map((district) => (
-                      <SelectItem key={district} value={district}>
-                        {district}
-                      </SelectItem>
-                    ))}
+                  {districts.map((district) => (
+                    <SelectItem key={district.id} value={district.name}>
+                      {district.name}
+                    </SelectItem>
+                  ))}
                   </SelectContent>
                 </Select>
               </CardContent>

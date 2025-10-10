@@ -8,4 +8,5 @@ export interface CropRecommendation {
   soilRequirements: string;
   waterNeeds: string;
   temperature: string;
+  cropId?: string;
 }
