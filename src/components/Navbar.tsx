@@ -5,10 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -46,19 +49,20 @@ export const Navbar = () => {
           {user ? (
             <>
               <Button variant="ghost" asChild>
-                <Link to="/dashboard">Dashboard</Link>
+                <Link to="/dashboard">{t('nav.dashboard')}</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/support">Support</Link>
+                <Link to="/support">{t('nav.support')}</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/community">Community</Link>
+                <Link to="/community">{t('nav.community')}</Link>
               </Button>
               <Button variant="ghost" asChild>
-                <Link to="/profile">Profile</Link>
+                <Link to="/profile">{t('nav.profile')}</Link>
               </Button>
+              <LanguageSwitcher />
               <Button variant="outline" onClick={handleSignOut}>
-                Sign Out
+                {t('nav.logout')}
               </Button>
             </>
           ) : (
@@ -69,6 +73,7 @@ export const Navbar = () => {
               <Button asChild>
                 <Link to="/auth">Get Started</Link>
               </Button>
+              <LanguageSwitcher />
             </>
           )}
         </div>

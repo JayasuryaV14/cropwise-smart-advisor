@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { CropRecommendation } from "@/types/crop";
 import { CropSelector } from "@/components/CropSelector";
 import { ParameterAdjustment } from "@/components/ParameterAdjustment";
+import { CropComparison } from "@/components/CropComparison";
+import { YieldSimulator } from "@/components/YieldSimulator";
+import { ArrowLeft } from "lucide-react";
 
-type ViewMode = "district" | "crops" | "detail";
+type ViewMode = "district" | "crops" | "detail" | "compare" | "simulate";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [recommendations, setRecommendations] = useState<CropRecommendation[]>([]);
@@ -387,9 +393,9 @@ export default function Dashboard() {
         <div className="space-y-8">
           {/* Header */}
           <div>
-            <h1 className="text-4xl font-bold tracking-tight">Crop Recommendations</h1>
+            <h1 className="text-4xl font-bold tracking-tight">{t('dashboard.title')}</h1>
             <p className="text-muted-foreground mt-2">
-              AI-powered analysis based on your location's soil and weather conditions
+              {t('dashboard.subtitle')}
             </p>
           </div>
 
@@ -397,15 +403,15 @@ export default function Dashboard() {
           {viewMode === "district" && (
             <Card>
               <CardHeader>
-                <CardTitle>Step 1: Select Your District</CardTitle>
+                <CardTitle>{t('dashboard.selectDistrict')}</CardTitle>
                 <CardDescription>
-                  Choose your district to get personalized crop recommendations
+                  {t('dashboard.selectDistrictDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Select value={selectedDistrict} onValueChange={handleDistrictChange}>
                   <SelectTrigger className="w-full md:w-96">
-                    <SelectValue placeholder="Select a district" />
+                    <SelectValue placeholder={t('dashboard.selectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                   {districts.map((district) => (
@@ -421,19 +427,51 @@ export default function Dashboard() {
 
           {/* Crop List */}
           {viewMode === "crops" && (
-            <CropSelector
+            <>
+              <div className="flex gap-4">
+                <Button variant="outline" onClick={handleBackToDistrict}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {t('dashboard.backToDistrict')}
+                </Button>
+                <Button variant="outline" onClick={() => setViewMode("compare")}>
+                  {t('dashboard.compare')}
+                </Button>
+              </div>
+              <CropSelector
+                recommendations={recommendations}
+                selectedDistrict={selectedDistrict}
+                onSelectCrop={handleSelectCrop}
+                onBack={handleBackToDistrict}
+              />
+            </>
+          )}
+
+          {/* Comparison View */}
+          {viewMode === "compare" && (
+            <CropComparison
               recommendations={recommendations}
-              selectedDistrict={selectedDistrict}
-              onSelectCrop={handleSelectCrop}
-              onBack={handleBackToDistrict}
+              onBack={() => setViewMode("crops")}
             />
           )}
 
           {/* Detail View with Parameters */}
           {viewMode === "detail" && selectedCrop && (
-            <ParameterAdjustment
+            <>
+              <Button variant="outline" onClick={() => setViewMode("simulate")}>
+                {t('dashboard.simulate')}
+              </Button>
+              <ParameterAdjustment
+                crop={selectedCrop}
+                onBack={handleBackToCrops}
+              />
+            </>
+          )}
+
+          {/* Simulator View */}
+          {viewMode === "simulate" && selectedCrop && (
+            <YieldSimulator
               crop={selectedCrop}
-              onBack={handleBackToCrops}
+              onBack={() => setViewMode("detail")}
             />
           )}
         </div>
